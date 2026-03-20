@@ -1,0 +1,35 @@
+[project]
+name = "csan-labs"
+version = "0.0.0"
+requires-python = ">=3.14"
+
+[dependency-groups]
+dev = ["ruff", "mypy"]
+
+[tool.uv.workspace]
+members = ["lab*"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py314"
+
+[tool.ruff.lint]
+extend-select = ["I"]
+select = [
+    "E",
+    "W",
+    "F",
+    "I",
+    "N",
+    "UP",
+    "B",
+    "C4",
+]
+ignore = []
+
+[tool.ruff.lint.isort]
+known-first-party = ["src"]
+
+[tool.mypy]
+python_version = "3.14"
+strict = true
