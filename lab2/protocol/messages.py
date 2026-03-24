@@ -1,5 +1,6 @@
-import struct
 import os
+import socket
+import struct
 from enum import IntEnum
 
 
@@ -34,11 +35,11 @@ def pack_nickname(name: str) -> bytes:
     return header + payload
 
 
-def send_message(sock, data: bytes) -> None:
+def send_message(sock: socket.socket, data: bytes) -> None:
     sock.sendall(data)
 
 
-def recv_exactly(sock, n: int) -> bytes:
+def recv_exactly(sock: socket.socket, n: int) -> bytes:
     buf = bytearray()
     while len(buf) < n:
         chunk = sock.recv(n - len(buf))
@@ -48,7 +49,7 @@ def recv_exactly(sock, n: int) -> bytes:
     return bytes(buf)
 
 
-def recv_message(sock) -> tuple[MessageType, bytes]:
+def recv_message(sock: socket.socket) -> tuple[MessageType, bytes]:
     header = recv_exactly(sock, HEADER_SIZE)
     msg_type, payload_len = struct.unpack(HEADER_FORMAT, header)
     payload = recv_exactly(sock, payload_len) if payload_len > 0 else b""

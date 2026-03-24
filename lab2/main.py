@@ -4,7 +4,7 @@ from network.server import PeerServer
 from ui.console import ConsoleUI
 
 
-def main():
+def main() -> None:
     nickname = input("Введите никнейм: ").strip()
     if not nickname:
         nickname = "anonymous"

@@ -1,6 +1,6 @@
 import socket
 import threading
-from typing import Callable
+from collections.abc import Callable
 
 from network.connection import Connection
 
@@ -13,7 +13,7 @@ class PeerServer:
         self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.sock.bind((host, port))
         self._running = False
-        self.on_new_connection: Callable | None = None
+        self.on_new_connection: Callable[[Connection], None] | None = None
 
     def start(self) -> None:
         self._running = True

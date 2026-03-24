@@ -1,10 +1,11 @@
 import os
 import threading
+from collections.abc import Callable
 
-from protocol.messages import MessageType, unpack_text, unpack_file
-from network.connection import Connection
 from network.client import connect_to_peer
+from network.connection import Connection
 from network.server import PeerServer
+from protocol.messages import MessageType, unpack_file, unpack_text
 
 RECEIVED_DIR = "received_files"
 
@@ -23,9 +24,7 @@ class ConsoleUI:
     def _handle_incoming(self, conn: Connection) -> None:
         conn.start_recv_loop(self._on_message, self._on_disconnect)
 
-    def _on_message(
-        self, conn: Connection, msg_type: MessageType, payload: bytes
-    ) -> None:
+    def _on_message(self, conn: Connection, msg_type: MessageType, payload: bytes) -> None:
         if msg_type == MessageType.NICKNAME:
             conn.nickname = payload.decode("utf-8")
             with self._lock:
@@ -49,9 +48,7 @@ class ConsoleUI:
                 counter += 1
             with open(save_path, "wb") as f:
                 f.write(data)
-            print(
-                f"\n[{conn.nickname}] отправил файл: {filename} -> сохранён в {save_path}"
-            )
+            print(f"\n[{conn.nickname}] отправил файл: {filename} -> сохранён в {save_path}")
 
     def _on_disconnect(self, conn: Connection) -> None:
         with self._lock:
@@ -59,7 +56,17 @@ class ConsoleUI:
                 self.peers.remove(conn)
         print(f"\n[-] {conn} отключился")
 
-    def _broadcast(self, action) -> None:
+    def _send_text_to_all(self, text: str) -> None:
+        def action(peer: Connection, t: str = text) -> None:
+            peer.send_text(t)
+        self._broadcast(action)
+
+    def _send_file_to_all(self, filepath: str) -> None:
+        def action(peer: Connection, fp: str = filepath) -> None:
+            peer.send_file(fp)
+        self._broadcast(action)
+
+    def _broadcast(self, action: Callable[[Connection], None]) -> None:
         with self._lock:
             peers = list(self.peers)
         for peer in peers:
@@ -93,11 +100,10 @@ class ConsoleUI:
             elif line.startswith("/file "):
                 self._cmd_file(line)
             elif line.startswith("/msg "):
-                text = line[5:]
-                self._broadcast(lambda p, t=text: p.send_text(t))
+                self._send_text_to_all(line[5:])
             else:
                 # Любой текст без команды — отправить как сообщение
-                self._broadcast(lambda p, t=line: p.send_text(t))
+                self._send_text_to_all(line)
 
         self._shutdown()
 
@@ -126,7 +132,7 @@ class ConsoleUI:
         if not os.path.isfile(filepath):
             print(f"Файл не найден: {filepath}")
             return
-        self._broadcast(lambda p, fp=filepath: p.send_file(fp))
+        self._send_file_to_all(filepath)
         print(f"Файл отправлен: {filepath}")
 
     def _print_peers(self) -> None:
