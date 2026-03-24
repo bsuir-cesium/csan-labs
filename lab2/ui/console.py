@@ -39,8 +39,8 @@ class ConsoleUI:
             print(f"\n[{conn.nickname}]: {text}")
         elif msg_type == MessageType.FILE:
             filename, data = unpack_file(payload)
+            os.makedirs(RECEIVED_DIR, exist_ok=True)
             save_path = os.path.join(RECEIVED_DIR, filename)
-            # Avoid overwriting existing files
             base, ext = os.path.splitext(filename)
             counter = 1
             while os.path.exists(save_path):
